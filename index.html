@@ -1,36 +1,84 @@
 <!DOCTYPE html>
-<html>
-  <body>
-    <textarea id="prompt" style="width:100%;height:200px;"></textarea><br>
-    <button id="sendBtn">Send</button>
-    <pre id="response" style="white-space:pre-wrap;"></pre>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPT</title>
+  <style>
+    :root { color-scheme: dark; }
+    body{
+      margin:0; background:#0b0f14; color:#e6edf3;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .wrap{ max-width:900px; margin:40px auto; padding:0 18px; }
+    .card{
+      background:#0f1621; border:1px solid rgba(255,255,255,.08);
+      border-radius:14px; padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    textarea{
+      width:100%; min-height:160px; resize:vertical;
+      background:#0b0f14; color:#e6edf3;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px; padding:14px;
+      outline:none; line-height:1.4; font-size:14px;
+    }
+    textarea:focus{ border-color: rgba(140,180,255,.45); }
+    .row{ display:flex; gap:10px; margin-top:12px; align-items:center; }
+    button{
+      background:#1a2636; color:#e6edf3;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px; padding:10px 14px;
+      cursor:pointer; font-weight:600;
+    }
+    button:hover{ border-color: rgba(140,180,255,.45); }
+    .hint{ color:#9aa7b2; font-size:12px; flex:1; }
+    pre{
+      margin:14px 0 0 0; padding:14px;
+      background:#0b0f14; border:1px solid rgba(255,255,255,.08);
+      border-radius:12px; white-space:pre-wrap; line-height:1.5; font-size:14px;
+      min-height:110px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <textarea id="prompt" placeholder="Type here..."></textarea>
+      <div class="row">
+        <button id="sendBtn">Send</button>
+        <div class="hint">Enter text → Send. Response appears below.</div>
+      </div>
+      <pre id="response"></pre>
+    </div>
+  </div>
 
-    <script>
-      const btn = document.getElementById("sendBtn");
-      const promptEl = document.getElementById("prompt");
-      const out = document.getElementById("response");
+  <script>
+    const btn = document.getElementById("sendBtn");
+    const promptEl = document.getElementById("prompt");
+    const out = document.getElementById("response");
 
-      btn.addEventListener("click", async () => {
-        out.textContent = "…sending…";
-        try {
-          const res = await fetch("/api/chat", {
-            method: "POST",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({ prompt: promptEl.value })
-          });
+    btn.addEventListener("click", async () => {
+      out.textContent = "…sending…";
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ prompt: promptEl.value })
+        });
 
-          const raw = await res.text();
-          if (!res.ok) {
-            out.textContent = "ERROR " + res.status + ":\n" + raw;
-            return;
-          }
+        const raw = await res.text();
+        if (!res.ok) { out.textContent = "ERROR " + res.status + ":\n" + raw; return; }
+        const data = JSON.parse(raw);
+        out.textContent = data.reply ?? "(no reply)";
+      } catch (e) {
+        out.textContent = "FETCH FAILED:\n" + String(e);
+      }
+    });
 
-          const data = JSON.parse(raw);
-          out.textContent = data.reply ?? "(no reply)";
-        } catch (e) {
-          out.textContent = "FETCH FAILED:\n" + String(e);
-        }
-      });
-    </script>
-  </body>
+    // Optional: Cmd/Ctrl+Enter to send
+    promptEl.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") btn.click();
+    });
+  </script>
+</body>
 </html>
