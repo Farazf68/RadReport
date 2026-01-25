@@ -8,14 +8,29 @@
 <script>
 async function send() {
   const prompt = document.getElementById("prompt").value;
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ prompt })
-  });
-  const data = await res.json();
-  document.getElementById("response").textContent = data.reply;
+  const out = document.getElementById("response");
+  out.textContent = "…";
+
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ prompt })
+    });
+
+    const text = await res.text(); // read raw response
+    if (!res.ok) {
+      out.textContent = "ERROR " + res.status + ":\n" + text;
+      return;
+    }
+
+    const data = JSON.parse(text);
+    out.textContent = data.reply ?? "(no reply field)";
+  } catch (e) {
+    out.textContent = "FETCH FAILED:\n" + String(e);
+  }
 }
 </script>
+
 </body>
 </html>
