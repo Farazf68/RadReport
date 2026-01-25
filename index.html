@@ -1,36 +1,36 @@
 <!DOCTYPE html>
 <html>
-<body>
-<textarea id="prompt" style="width:100%;height:200px;"></textarea><br>
-<button onclick="send()">Send</button>
-<pre id="response"></pre>
+  <body>
+    <textarea id="prompt" style="width:100%;height:200px;"></textarea><br>
+    <button id="sendBtn">Send</button>
+    <pre id="response" style="white-space:pre-wrap;"></pre>
 
-<script>
-async function send() {
-  const prompt = document.getElementById("prompt").value;
-  const out = document.getElementById("response");
-  out.textContent = "…";
+    <script>
+      const btn = document.getElementById("sendBtn");
+      const promptEl = document.getElementById("prompt");
+      const out = document.getElementById("response");
 
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ prompt })
-    });
+      btn.addEventListener("click", async () => {
+        out.textContent = "…sending…";
+        try {
+          const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ prompt: promptEl.value })
+          });
 
-    const text = await res.text(); // read raw response
-    if (!res.ok) {
-      out.textContent = "ERROR " + res.status + ":\n" + text;
-      return;
-    }
+          const raw = await res.text();
+          if (!res.ok) {
+            out.textContent = "ERROR " + res.status + ":\n" + raw;
+            return;
+          }
 
-    const data = JSON.parse(text);
-    out.textContent = data.reply ?? "(no reply field)";
-  } catch (e) {
-    out.textContent = "FETCH FAILED:\n" + String(e);
-  }
-}
-</script>
-
-</body>
+          const data = JSON.parse(raw);
+          out.textContent = data.reply ?? "(no reply)";
+        } catch (e) {
+          out.textContent = "FETCH FAILED:\n" + String(e);
+        }
+      });
+    </script>
+  </body>
 </html>
