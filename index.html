@@ -6,19 +6,15 @@
 <title>GPT</title>
 
 <style>
-/* FORCE DARK EVERYWHERE */
+/* FORCE DARK MODE EVERYWHERE */
 html, body {
   background-color:#0b0f14 !important;
   color:#e6edf3 !important;
 }
 
-* {
-  box-sizing: border-box;
-}
+:root { color-scheme: dark; }
 
-:root {
-  color-scheme: dark;
-}
+* { box-sizing: border-box; }
 
 body{
   margin:0;
@@ -38,8 +34,9 @@ body{
   padding:16px;
 }
 
-/* INPUTS – including password + autofill */
-input, textarea, button {
+/* INPUTS */
+input, textarea, button{
+  width:100%;
   background:#0b0f14 !important;
   color:#e6edf3 !important;
   border:1px solid rgba(255,255,255,.12);
@@ -49,14 +46,14 @@ input, textarea, button {
   outline:none;
 }
 
-input::placeholder, textarea::placeholder {
+input::placeholder, textarea::placeholder{
   color:#8b98a5;
 }
 
-/* Chrome autofill fix */
+/* CHROME AUTOFILL FIX */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
+input:-webkit-autofill:focus{
   -webkit-box-shadow: 0 0 0 1000px #0b0f14 inset !important;
   -webkit-text-fill-color: #e6edf3 !important;
 }
@@ -64,6 +61,7 @@ input:-webkit-autofill:focus {
 button{
   cursor:pointer;
   font-weight:600;
+  margin-top:10px;
 }
 
 button:hover{
@@ -89,14 +87,14 @@ pre{
 <body>
 <div class="wrap">
 
-  <!-- Password -->
+  <!-- PASSWORD GATE -->
   <div id="login" class="card">
     <input id="pw" type="password" placeholder="Password" />
     <button onclick="unlock()">Enter</button>
     <pre id="pwmsg"></pre>
   </div>
 
-  <!-- App -->
+  <!-- APP -->
   <div id="app" class="card hidden">
     <textarea id="prompt" placeholder="Type here..."></textarea>
     <button id="sendBtn">Send</button>
@@ -106,10 +104,12 @@ pre{
 </div>
 
 <script>
+  // PASSWORD (case-sensitive)
   const PASSWORD = "Gage626";
 
   function unlock(){
-    if(document.getElementById("pw").value === PASSWORD){
+    const entered = document.getElementById("pw").value.trim();
+    if (entered === PASSWORD){
       document.getElementById("login").classList.add("hidden");
       document.getElementById("app").classList.remove("hidden");
     } else {
@@ -124,20 +124,28 @@ pre{
     out.textContent = "…";
     try {
       const res = await fetch("/api/chat", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ prompt: document.getElementById("prompt").value })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: document.getElementById("prompt").value
+        })
       });
+
       const raw = await res.text();
-      if(!res.ok){ out.textContent = raw; return; }
-      out.textContent = JSON.parse(raw).reply;
-    } catch(e){
+      if (!res.ok){
+        out.textContent = raw;
+        return;
+      }
+
+      out.textContent = JSON.parse(raw).reply ?? "(no response)";
+    } catch (e){
       out.textContent = "ERROR: " + e;
     }
   });
 
+  // Cmd/Ctrl + Enter to send
   document.getElementById("prompt").addEventListener("keydown", e => {
-    if((e.metaKey || e.ctrlKey) && e.key === "Enter") btn.click();
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") btn.click();
   });
 </script>
 </body>
