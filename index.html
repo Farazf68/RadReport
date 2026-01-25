@@ -6,18 +6,17 @@
 <title>GPT</title>
 
 <style>
-/* FORCE DARK MODE EVERYWHERE */
 html, body {
-  background-color:#0b0f14 !important;
+  background:#0b0f14 !important;
   color:#e6edf3 !important;
+  margin:0;
 }
 
 :root { color-scheme: dark; }
 
-* { box-sizing: border-box; }
+* { box-sizing:border-box; }
 
 body{
-  margin:0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
 }
 
@@ -34,7 +33,6 @@ body{
   padding:16px;
 }
 
-/* INPUTS */
 input, textarea, button{
   width:100%;
   background:#0b0f14 !important;
@@ -46,26 +44,10 @@ input, textarea, button{
   outline:none;
 }
 
-input::placeholder, textarea::placeholder{
-  color:#8b98a5;
-}
-
-/* CHROME AUTOFILL FIX */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus{
-  -webkit-box-shadow: 0 0 0 1000px #0b0f14 inset !important;
-  -webkit-text-fill-color: #e6edf3 !important;
-}
-
 button{
+  margin-top:10px;
   cursor:pointer;
   font-weight:600;
-  margin-top:10px;
-}
-
-button:hover{
-  border-color: rgba(140,180,255,.45);
 }
 
 pre{
@@ -75,9 +57,7 @@ pre{
   border-radius:12px;
   padding:14px;
   white-space:pre-wrap;
-  line-height:1.5;
-  min-height:120px;
-  font-size:14px;
+  font-size:13px;
 }
 
 .hidden{ display:none; }
@@ -87,11 +67,11 @@ pre{
 <body>
 <div class="wrap">
 
-  <!-- PASSWORD GATE -->
+  <!-- LOGIN -->
   <div id="login" class="card">
-    <input id="pw" type="password" placeholder="Password" />
+    <input id="pw" type="password" placeholder="Password" autocomplete="off" />
     <button onclick="unlock()">Enter</button>
-    <pre id="pwmsg"></pre>
+    <pre id="pwmsg">Waiting for input…</pre>
   </div>
 
   <!-- APP -->
@@ -104,16 +84,25 @@ pre{
 </div>
 
 <script>
-  // PASSWORD (case-sensitive)
+  // PASSWORD
   const PASSWORD = "Gage626";
 
   function unlock(){
-    const entered = document.getElementById("pw").value.trim();
-    if (entered === PASSWORD){
+    const raw = document.getElementById("pw").value;
+    const trimmed = raw.trim();
+
+    // SHOW EXACT INPUT (DEBUG)
+    document.getElementById("pwmsg").textContent =
+      `RAW: "${raw}" (len=${raw.length})
+TRIMMED: "${trimmed}" (len=${trimmed.length})
+EXPECTED: "${PASSWORD}" (len=${PASSWORD.length})`;
+
+    if (trimmed === PASSWORD){
+      document.getElementById("pwmsg").textContent += "\n\n✔ PASSWORD MATCH";
       document.getElementById("login").classList.add("hidden");
       document.getElementById("app").classList.remove("hidden");
     } else {
-      document.getElementById("pwmsg").textContent = "Incorrect password";
+      document.getElementById("pwmsg").textContent += "\n\n✖ INCORRECT PASSWORD";
     }
   }
 
@@ -124,28 +113,18 @@ pre{
     out.textContent = "…";
     try {
       const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({
           prompt: document.getElementById("prompt").value
         })
       });
-
       const raw = await res.text();
-      if (!res.ok){
-        out.textContent = raw;
-        return;
-      }
-
-      out.textContent = JSON.parse(raw).reply ?? "(no response)";
-    } catch (e){
+      if(!res.ok){ out.textContent = raw; return; }
+      out.textContent = JSON.parse(raw).reply;
+    } catch(e){
       out.textContent = "ERROR: " + e;
     }
-  });
-
-  // Cmd/Ctrl + Enter to send
-  document.getElementById("prompt").addEventListener("keydown", e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") btn.click();
   });
 </script>
 </body>
