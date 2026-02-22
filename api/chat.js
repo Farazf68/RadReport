@@ -9,26 +9,20 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        "Authorization": "Bearer anything"
       },
       body: JSON.stringify({
-        model: "gpt-4.1",
-        input: prompt
+        model: "kimi-coding/k2p5",
+        messages: [{role: "user", content: prompt}]
       })
     });
 
     const data = await r.json();
     if (!r.ok) return res.status(500).json({ error: data });
 
-    // Extract text output safely
-    const text =
-      (data.output || [])
-        .flatMap(o => o.content || [])
-        .filter(c => c.type === "output_text")
-        .map(c => c.text)
-        .join("") || "";
+    const text = data.choices?.[0]?.message?.content || "(no response)";
 
-    return res.status(200).json({ reply: text || "(no text returned)" });
+    return res.status(200).json({ reply: text });
   } catch (e) {
     return res.status(500).json({ error: String(e) });
   }
